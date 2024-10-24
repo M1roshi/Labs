@@ -18,15 +18,17 @@ def replace_digit_with_word(number):
         return new_number
     return number_str  # нечётные числа не изменяются
 
-# Функция для обработки строки
-def process_sequence(sequence):
-    numbers = sequence.split()  # разделяем строку на числа
-    for number in numbers:
-        if int(number) % 2 != 0:
-            print(number)  # выводим нечётные числа как есть
-        else:
-            print(replace_digit_with_word(number))  # для чётных чисел заменяем первую цифру
+# Функция для обработки последовательности из файла
+def process_sequence_from_file(file_path):
+    with open(file_path, 'r') as file:
+        for line in file:  # читаем файл построчно
+            numbers = line.split()  # разделяем строку на числа
+            for number in numbers:
+                if int(number) % 2 != 0:
+                    print(number)  # выводим нечётные числа как есть
+                else:
+                    print(replace_digit_with_word(number))  # для чётных чисел заменяем первую цифру
 
-# Пример входных данных (для проверки)
-sequence = "123 456 789 2468 1357"
-process_sequence(sequence)
+# Пример использования программы
+file_path = 'input.txt'  # путь к файлу с данными
+process_sequence_from_file(file_path)
