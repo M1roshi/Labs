@@ -22,25 +22,28 @@ def process_file(filename):
     with open(filename, 'r') as file:
         content = file.read()
     
-    # Используем регулярное выражение для нахождения всех чисел
-    numbers = re.findall(r'\b\d+\b', content)
+    # Используем регулярное выражение для нахождения всех чисел (включая отрицательные)
+    numbers = re.findall(r'-?\b\d+\b', content)
     
-    transformed_numbers = []
+    transformed_content = content  # Копия исходного текста для замены
+
     for i, num in enumerate(numbers):
         # Проверяем, является ли число нечетным
         if int(num) % 2 != 0:
-            transformed_numbers.append(num)
+            continue  # Нечетное число не изменяем
         else:
-            # Четное число на нечетной позиции: заменяем первую цифру на английскую пропись
+            # Четное число на нечетной позиции: заменяем первую цифру на английское слово
             if (i + 1) % 2 != 0:  # нечетная позиция (начиная с 1)
-                first_digit_english = digit_to_english(num[0])
-                transformed_num = first_digit_english + num[1:]
-                transformed_numbers.append(transformed_num)
-            else:
-                transformed_numbers.append(num)  # четное число на четной позиции оставляем как есть
+                # Определяем первую цифру, пропуская знак минус, если он есть
+                first_digit_english = digit_to_english(num[1] if num[0] == '-' else num[0])
+                transformed_num = (first_digit_english + num[2:]) if num[0] == '-' else (first_digit_english + num[1:])
+                
+                # Заменяем исходное число в тексте на преобразованное
+                transformed_content = re.sub(r'\b' + re.escape(num) + r'\b', transformed_num, transformed_content, 1)
     
-    # Выводим преобразованные числа
-    print(" ".join(transformed_numbers))
+    # Выводим преобразованный текст
+    print(transformed_content)
 
 # Пример вызова функции
 process_file('input.txt')
+
