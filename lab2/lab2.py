@@ -18,82 +18,121 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Ввод значений K и N
-K = int(input("Введите значение K: "))
-N = int(input("Введите значение N: "))
-
-if N % 2 != 0:
-    raise ValueError("N должно быть четным числом!")
-
-size = N // 2
-
-# Чтение матрицы из файла
+# Функция для чтения матрицы из файла
 def read_matrix_from_file(filename):
-    return np.loadtxt(filename, dtype=int)
+    try:
+        with open(filename, 'r') as file:
+            matrix = [list(map(int, line.split())) for line in file]
+        return np.array(matrix)
+    except Exception as e:
+        print("Ошибка при чтении файла:", e)
+        return None
 
-# Генерация матрицы
-def generate_matrix(size, start_value):
-    return np.arange(start_value, start_value + size*size).reshape(size, size)
+# Функция для проверки симметрии относительно побочной диагонали
+def is_anti_diagonal_symmetric(matrix):
+    N = matrix.shape[0]
+    for i in range(N):
+        for j in range(N):
+            if matrix[i, j] != matrix[N - j - 1, N - i - 1]:
+                return False
+    return True
 
-# Ввод имени файла и чтение матрицы B
-filename = input("Введите имя файла для матрицы B: ")
-B = read_matrix_from_file(filename)
+# Основная функция
+def main():
+    # Ввод значений K и N
+    K = int(input("Введите значение K: "))
+    N = int(input("Введите размер матрицы N: "))
 
-# Генерация матриц C, D, E
-C = generate_matrix(size, 10)
-D = generate_matrix(size, 50)
-E = generate_matrix(size, 100)
+    # Проверка, что матрица квадратная
+    if N <= 0:
+        print("Размер матрицы N должен быть положительным.")
+        return
 
-# Проверка размеров
-if B.shape != (size, size):
-    raise ValueError("Матрица B должна иметь размер (N/2, N/2)!")
+    # Загрузка матрицы из файла
+    A = read_matrix_from_file('matr.txt')
+    if A is None or A.shape != (N, N):
+        print("Ошибка: некорректная матрица.")
+        return
+    
+    print("Матрица A:")
+    print(A)
 
-# Создание матрицы A
-A = np.block([[B, E], [C, D]])
+    # Определение границ подматриц
+    half = N // 2
+    B = A[:half, :half]
+    E = A[:half, half:] if N % 2 == 0 else A[:half, half+1:]
+    C = A[half:, :half]
+    D = A[half:, half:] if N % 2 == 0 else A[half:, half+1:]
 
-# Копирование A в F
-F = A.copy()
+    # Создание матрицы F как копии матрицы A
+    F = np.copy(A)
 
-# Проверка симметрии относительно побочной диагонали
-if np.allclose(A, np.fliplr(np.flipud(A))):  # Если симметрична
-    B, D = D, B  # Меняем местами B и D
-else:
-    D, E = E, D  # Иначе меняем местами D и E
+    # Проверка на симметрию относительно побочной диагонали и перестановка подматриц
+    if is_anti_diagonal_symmetric(A):
+        # Симметрично меняем подматрицы B и D
+        F[:half, :half] = D[:half, :half]
+        F[half:, half:] = B
+    else:
+        # Несимметрично меняем подматрицы D и E
+        if N % 2 == 0:
+            F[half:, half:], F[:half, half:] = E, D
+        else:
+            F[half:, half+1:], F[:half, half+1:] = E, D
 
-# Расчет выражений в зависимости от определителя и суммы диагональных элементов
-det_A = np.linalg.det(A)
-diag_sum_F = np.trace(F)
+    print("Матрица F после перестановки подматриц:")
+    print(F)
 
-if det_A > diag_sum_F:
-    result_matrix = np.linalg.inv(A).T @ A - K * np.linalg.inv(F)
-else:
-    G = np.tril(A)  # Нижняя треугольная матрица
-    result_matrix = (A.T + G - F.T) * K
+    # Вычисление определителя A и суммы диагональных элементов F
+    det_A = np.linalg.det(A)
+    diag_sum_F = np.trace(F)
 
-# Вывод матрицы результата
-print("\nРезультирующая матрица:")
-print(result_matrix)
+    print("Определитель матрицы A:", det_A)
+    print("Сумма диагональных элементов матрицы F:", diag_sum_F)
 
-# Построение графиков
-plt.figure(figsize=(10, 6))
+    # Вычисление матрицы G - нижней треугольной матрицы из A
+    G = np.tril(A)
+    print("Нижняя треугольная матрица G из A:")
+    print(G)
 
-# График матрицы A
-plt.subplot(1, 3, 1)
-plt.imshow(A, cmap='viridis')
-plt.title('Матрица A')
-plt.colorbar()
+    # Проверка условия и выполнение соответствующего выражения
+    try:
+        if det_A > diag_sum_F:
+            # A^-1 * A^T – K * F^-1
+            result = np.linalg.inv(A).dot(A.T) - K * np.linalg.inv(F)
+            print("Результат выражения A^-1 * A^T – K * F^-1:")
+        else:
+            # (A^T + G - F^T) * K
+            result = (A.T + G - F.T) * K
+            print("Результат выражения (A^T + G - F^T) * K:")
+        
+        print(result)
 
-# График матрицы F
-plt.subplot(1, 3, 2)
-plt.imshow(F, cmap='plasma')
-plt.title('Матрица F')
-plt.colorbar()
+    except np.linalg.LinAlgError:
+        print("Ошибка: невозможно вычислить обратную матрицу, возможно, матрица F или A вырождена.")
 
-# График результирующей матрицы
-plt.subplot(1, 3, 3)
-plt.imshow(result_matrix, cmap='inferno')
-plt.title('Результирующая матрица')
-plt.colorbar()
+    # Построение графиков
+    plt.figure(figsize=(15, 5))
 
-plt.tight_layout()
-plt.show()
+    # График 1 - Исходная матрица A
+    plt.subplot(1, 3, 1)
+    plt.imshow(A, cmap='viridis', interpolation='none')
+    plt.colorbar()
+    plt.title("Матрица A")
+
+    # График 2 - Модифицированная матрица F
+    plt.subplot(1, 3, 2)
+    plt.imshow(F, cmap='plasma', interpolation='none')
+    plt.colorbar()
+    plt.title("Матрица F")
+
+    # График 3 - Результат вычисления
+    plt.subplot(1, 3, 3)
+    plt.imshow(result, cmap='inferno', interpolation='none')
+    plt.colorbar()
+    plt.title("Результат выражения")
+
+    plt.show()
+
+# Запуск программы
+if __name__ == "__main__":
+    main()
