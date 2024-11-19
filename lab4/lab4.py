@@ -17,11 +17,8 @@ def digit_to_english(digit):
     }
     return english_digits.get(digit, '')
 
-# Регулярные выражения для различных категорий чисел
-positive_even_pattern = re.compile(r'^\d*[02468]$')
-positive_odd_pattern = re.compile(r'^\d*[13579]$')
-negative_even_pattern = re.compile(r'^-\d*[02468]$')
-negative_odd_pattern = re.compile(r'^-\d*[13579]$')
+# Универсальный шаблон для чисел
+number_pattern = re.compile(r'^(?P<sign>-)?\d*(?P<last_digit>[0-9])$')
 
 # Основная функция для обработки файла
 def process_file(filename):
@@ -36,18 +33,20 @@ def process_file(filename):
         transformed_objects = []
         for i, obj in enumerate(objects):
             transformed_obj = obj  # Изначально объект остается без изменений
-            
-            # Проверка условий с помощью регулярных выражений
-            if positive_even_pattern.fullmatch(obj) or negative_even_pattern.fullmatch(obj):
-                # Четное число
-                is_odd_position = (i + 1) % 2 != 0  # Проверка на нечетную позицию (нумерация от 1)
+
+            # Проверяем, является ли объект числом и определяем его тип
+            match = number_pattern.fullmatch(obj)
+            if match:
+                is_even = match.group('last_digit') in '02468'  # Четное число
+                is_negative = match.group('sign') == '-'         # Отрицательное число
+                is_odd_position = (i + 1) % 2 != 0               # Проверка на нечетную позицию (нумерация от 1)
                 
-                if is_odd_position:
+                if is_even and is_odd_position:
                     # Четное число на нечетной позиции: заменяем первую цифру на английское слово
-                    first_char = obj[1] if obj.startswith('-') else obj[0]
+                    first_char = obj[1] if is_negative else obj[0]
                     first_digit_english = digit_to_english(first_char)
                     # Формируем новое число с замененной первой цифрой
-                    if obj.startswith('-'):
+                    if is_negative:
                         transformed_obj = '-' + first_digit_english + obj[2:]
                     else:
                         transformed_obj = first_digit_english + obj[1:]
@@ -64,5 +63,6 @@ def process_file(filename):
 # Пример вызова функции
 if __name__ == "__main__":
     process_file('input.txt')
+
 
 
