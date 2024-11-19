@@ -8,72 +8,59 @@
 Вариант 6:	F(x<2) = 5; F(n) =(-1)^n*(F(n-1)/n! * F(n-5) /(2n)!)
 """
 
-import time
 import math
+from datetime import datetime
 
-# Рекурсивный метод с использованием стека для минимизации глубины рекурсии и памяти
-memo = {0: 5, 1: 5}  # Кеш для уже вычисленных значений
+# Рекурсивная реализация функции
+def recursive_function(n):
+    if n <= 2:  # Базовый случай: если n <= 2, возвращаем 5
+        return 5
+    return (-1)**n * (recursive_function(n - 1) * math.factorial(n) / (2 * n) * recursive_function(n - 5) / math.factorial(2 * n))
 
-def F_rec_stack(n):
-    if n in memo:
-        return memo[n]  # Возвращаем значение, если оно уже в кеше
-    
-    stack = [n]  # Инициализируем стек
-    while stack:
-        top = stack[-1]
-        # Начальные условия
-        if top < 2:
-            memo[top] = 5
-            stack.pop()
-        elif top not in memo:
-            # Проверяем, есть ли необходимые промежуточные значения
-            if top - 1 in memo and top - 5 in memo:
-                # Вычисляем значение и сохраняем в кеше
-                memo[top] = (-1) ** top * (memo[top - 1] / math.factorial(top) * memo[top - 5] / math.factorial(2 * top))
-                stack.pop()
-            else:
-                # Добавляем отсутствующие промежуточные значения в стек
-                if top - 1 not in memo:
-                    stack.append(top - 1)
-                if top - 5 not in memo:
-                    stack.append(top - 5)
-        else:
-            stack.pop()
-    return memo[n]
+# Итеративная реализация функции
+def iterative_function(n):
+    if n <= 2:  # Если n <= 2, возвращаем 5
+        return 5
 
-# Итерационный метод
-def F_iter(n):
-    if n < 2:
-        return 5  # Начальные условия
-    values = [5, 5]  # Начальные значения для F(0) и F(1)
-    for i in range(2, n + 1):
-        # Проверяем, доступны ли индексы для значений i-1 и i-5
-        if i - 5 >= 0:
-            current_value = (-1) ** i * (values[i - 1] / math.factorial(i) * values[i - 5] / math.factorial(2 * i))
-        else:
-            current_value = (-1) ** i * (values[i - 1] / math.factorial(i))  # Если i-5 недоступен, вычисляем только с i-1
-        values.append(current_value)  # Сохраняем значение
-    return values[n]
+    values = [5] * max(n + 1, 6)  # Создаем массив для промежуточных значений
+    for i in range(3, n + 1):
+        values[i] = (-1)**i * (values[i - 1] * math.factorial(i) / (2 * i) * values[i - 5] / math.factorial(2 * i))
+    return values[n]  # Возвращаем результат для n
 
-# Функция для усредненного замера времени выполнения
-def measure_time(n, repetitions=10000):
-    # Замер времени для рекурсивного метода
-    start_time = time.perf_counter()
-    for _ in range(repetitions):
-        F_rec_stack(n)
-    rec_time = (time.perf_counter() - start_time) / repetitions  # Среднее время
+# Функция для сравнения времени выполнения двух методов
+def compare_methods(n_values):
+    results = []
 
-    # Замер времени для итерационного метода
-    start_time = time.perf_counter()
-    for _ in range(repetitions):
-        F_iter(n)
-    iter_time = (time.perf_counter() - start_time) / repetitions  # Среднее время
+    for n in n_values:
+        # Рекурсивный метод
+        start_time = datetime.now()  # Засекаем время
+        try:
+            recursive_result = recursive_function(n)
+        except RecursionError:  # Если возникает ошибка переполнения стека
+            recursive_result = None
+        recursive_time = (datetime.now() - start_time).total_seconds()  # Вычисляем время выполнения
 
-    return rec_time, iter_time
+        # Итеративный метод
+        start_time = datetime.now()  # Засекаем время
+        iterative_result = iterative_function(n)
+        iterative_time = (datetime.now() - start_time).total_seconds()  # Вычисляем время выполнения
 
-# Вывод таблицы результатов
-print(f"{'n':>5} | {'Рекурсивный (с)':>15} | {'Итеративный (с)':>15}")
-print("-" * 40)
-for n in range(2, 21):
-    rec_time, iter_time = measure_time(n)
-    print(f"{n:>5} | {rec_time:>15.8f} | {iter_time:>15.8f}")
+        # Записываем результаты в список
+        results.append({
+            'n': n,
+            'recursive_result': recursive_result,
+            'recursive_time': recursive_time,
+            'iterative_result': iterative_result,
+            'iterative_time': iterative_time
+        })
+
+    return results
+
+# Пример использования программы
+n_values = range(1, 21)  # Проверяем значения n от 1 до 20
+results = compare_methods(n_values)
+
+# Выводим результаты в виде таблицы
+print(f"{'n':<5}{'Rec. Result':<15}{'Rec. Time (s)':<15}{'Iter. Result':<15}{'Iter. Time (s)':<15}")
+for result in results:
+    print(f"{result['n']:<5}{str(result['recursive_result']):<15}{result['recursive_time']:<15.6f}{result['iterative_result']:<15}{result['iterative_time']:<15.6f}")
