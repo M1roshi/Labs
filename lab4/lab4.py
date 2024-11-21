@@ -17,47 +17,32 @@ def digit_to_english(digit):
     }
     return english_digits.get(digit, '')
 
-# Универсальный шаблон для чисел
-number_pattern = re.compile(r'^(?P<sign>-)?\d*(?P<last_digit>[0-9])$')
-
 # Основная функция для обработки файла
 def process_file(filename):
     with open(filename, 'r') as file:
         lines = file.readlines()
     
+    # Шаблон: находим четные числа (положительные и отрицательные)
+    pattern = re.compile(r'(?P<sign>-)?(?P<first_digit>[0-9])(?P<rest>\d*[02468])')
+
+    def transform(match):
+        # Преобразуем первую цифру в английское слово
+        first_digit_word = digit_to_english(match.group('first_digit'))
+        sign = match.group('sign') or ''  # Если нет знака, оставляем пустую строку
+        rest = match.group('rest')
+        return f"{sign}{first_digit_word}{rest}"
+
+    # Преобразуем строки: только четные числа на нечетных позициях
     transformed_lines = []
     for line in lines:
-        # Разбиваем строку на объекты, разделенные пробелами
-        objects = line.split()
-        
-        transformed_objects = []
-        for i, obj in enumerate(objects):
-            transformed_obj = obj  # Изначально объект остается без изменений
-
-            # Проверяем, является ли объект числом и определяем его тип
-            match = number_pattern.fullmatch(obj)
-            if match:
-                is_even = match.group('last_digit') in '02468'  # Четное число
-                is_negative = match.group('sign') == '-'         # Отрицательное число
-                is_odd_position = (i + 1) % 2 != 0               # Проверка на нечетную позицию (нумерация от 1)
-                
-                if is_even and is_odd_position:
-                    # Четное число на нечетной позиции: заменяем первую цифру на английское слово
-                    first_char = obj[1] if is_negative else obj[0]
-                    first_digit_english = digit_to_english(first_char)
-                    # Формируем новое число с замененной первой цифрой
-                    if is_negative:
-                        transformed_obj = '-' + first_digit_english + obj[2:]
-                    else:
-                        transformed_obj = first_digit_english + obj[1:]
-            
-            # Добавляем обработанный объект
-            transformed_objects.append(transformed_obj)
-        
-        # Добавляем преобразованную строку в список строк
-        transformed_lines.append(" ".join(transformed_objects))
+        words = line.split()
+        for i, word in enumerate(words):
+            # Применяем замену только к четным числам на нечетных позициях
+            if (i + 1) % 2 != 0:  # Нечетная позиция
+                words[i] = pattern.sub(transform, word, count=1)
+        transformed_lines.append(" ".join(words))
     
-    # Выводим результат, сохраняя многострочную структуру
+    # Выводим результат
     print("\n".join(transformed_lines))
 
 # Пример вызова функции
