@@ -9,45 +9,63 @@
 
 import re
 
-# Функция для преобразования цифры в английское слово
-def digit_to_english(digit):
-    english_digits = {
-        '0': 'zero', '1': 'one', '2': 'two', '3': 'three', '4': 'four',
-        '5': 'five', '6': 'six', '7': 'seven', '8': 'eight', '9': 'nine'
-    }
-    return english_digits.get(digit, '')
+# Словарь для преобразования цифры в слово на английском
+digit_to_word = {
+    '0': 'zero',
+    '1': 'one',
+    '2': 'two',
+    '3': 'three',
+    '4': 'four',
+    '5': 'five',
+    '6': 'six',
+    '7': 'seven',
+    '8': 'eight',
+    '9': 'nine',
+}
 
-# Основная функция для обработки файла
-def process_file(filename):
-    with open(filename, 'r') as file:
-        lines = file.readlines()
+def process_numbers(file_path):
+    try:
+        # Читаем содержимое файла
+        with open(file_path, 'r', encoding='utf-8') as file:
+            content = file.read()
+        
+        # Разделяем содержимое на объекты через пробел
+        objects = content.split()
+        
+        # Функция для проверки и преобразования чисел
+        def transform_number(number, index):
+            if not re.fullmatch(r'-?\d+', number):  # Пропуск, если это не целое число
+                return number
+            
+            num = int(number)  # Преобразуем в число
+            
+            # Проверяем, что число четное и стоит на нечетной позиции
+            if num % 2 == 0 and index % 2 == 0:  # Индексация с нуля, 0, 2, 4 - нечетные позиции
+                if number[0] == '-':  # Если число отрицательное, работаем со второй цифрой
+                    return '-' + digit_to_word[number[1]] + number[2:]
+                else:
+                    return digit_to_word[number[0]] + number[1:]
+            else:
+                return number  # Остальные числа остаются без изменений
+        
+        # Преобразуем все числа в списке
+        transformed_objects = [
+            transform_number(obj, i) for i, obj in enumerate(objects)
+        ]
+        
+        # Выводим результат
+        result = ' '.join(transformed_objects)
+        print("Результат преобразования:")
+        print(result)
     
-    # Шаблон: находим четные числа (положительные и отрицательные)
-    pattern = re.compile(r'(?P<sign>-)?(?P<first_digit>[0-9])(?P<rest>\d*[02468])')
+    except FileNotFoundError:
+        print(f"Файл {file_path} не найден.")
+    except Exception as e:
+        print(f"Произошла ошибка: {e}")
 
-    def transform(match):
-        # Преобразуем первую цифру в английское слово
-        first_digit_word = digit_to_english(match.group('first_digit'))
-        sign = match.group('sign') or ''  # Если нет знака, оставляем пустую строку
-        rest = match.group('rest')
-        return f"{sign}{first_digit_word}{rest}"
-
-    # Преобразуем строки: только четные числа на нечетных позициях
-    transformed_lines = []
-    for line in lines:
-        words = line.split()
-        for i, word in enumerate(words):
-            # Применяем замену только к четным числам на нечетных позициях
-            if (i + 1) % 2 != 0:  # Нечетная позиция
-                words[i] = pattern.sub(transform, word, count=1)
-        transformed_lines.append(" ".join(words))
-    
-    # Выводим результат
-    print("\n".join(transformed_lines))
-
-# Пример вызова функции
-if __name__ == "__main__":
-    process_file('input.txt')
+# Указываем путь к файлу
+file_path = "input.txt"
+process_numbers(file_path)
 
 
 
