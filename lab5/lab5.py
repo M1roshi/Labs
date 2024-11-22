@@ -61,6 +61,6 @@ n_values = range(1, 21)  # Проверяем значения n от 1 до 20
 results = compare_methods(n_values)
 
 # Выводим результаты в виде таблицы
-print(f"{'n':<5}{'Rec. Result':<15}{'Rec. Time (s)':<15}{'Iter. Result':<15}{'Iter. Time (s)':<15}")
+print(f"{'n':<5}{'Рек. Результат':<15}{'Рек. Время (с)':<15}{'Итер. Результат':<15}{'Итер. Время (с)':<15}")
 for result in results:
     print(f"{result['n']:<5}{str(result['recursive_result']):<15}{result['recursive_time']:<15.6f}{result['iterative_result']:<15}{result['iterative_time']:<15.6f}")
