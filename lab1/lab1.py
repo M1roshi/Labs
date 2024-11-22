@@ -23,100 +23,122 @@
 
 import random
 
-# Функция для загрузки матрицы из файла
-def load_matrix_from_file(filename):
-    matrix = []
+# Функция для чтения матрицы из файла
+def read_matrix_from_file(filename):
     with open(filename, 'r') as file:
-        for line in file:
-            row = list(map(int, line.split()))
-            matrix.append(row)
+        matrix = [list(map(int, line.split())) for line in file]
     return matrix
 
-# Запрос на ввод значений для K и N
-K = int(input("Введите значение K: "))
-N = int(input("Введите размер матрицы N (NxN): "))
+# Функция для формирования пустой матрицы N x N
+def create_empty_matrix(N):
+    return [[0] * N for _ in range(N)]
 
-# Инициализация матрицы A
-A = load_matrix_from_file("matr.txt")
+# Функция для проверки количества нулей в заданной области
+def count_zeros_in_area(matrix, N, area):
+    zeros = 0
+    for i in range(N):
+        for j in range(N):
+            if area(i, j, N) and matrix[i][j] == 0:
+                zeros += 1
+    return zeros
 
-# Вывод начальной матрицы A
-print("Матрица A:")
-for row in A:
-    print(row)
+# Условие для области 1 (левый треугольник)
+def area_1(i, j, N):
+    return i >= j
 
-# Копируем матрицу A в матрицу F
-F = [row[:] for row in A]  # Глубокое копирование матрицы A
+# Условие для области 2 (верхний треугольник)
+def area_2(i, j, N):
+    return i <= j
 
-# Функция для подсчета нулевых элементов в заданной области
-def count_zeros_in_region(matrix, start_row, end_row, start_col, end_col, col_parity):
-    count = 0
-    for i in range(start_row, end_row):
-        for j in range(start_col, end_col):
-            if (j % 2 == col_parity) and matrix[i][j] == 0:
-                count += 1
-    return count
+# Условие для области 3 (правый треугольник)
+def area_3(i, j, N):
+    return i + j >= N - 1
 
-# Функция для обмена областей в матрице F
-def swap_regions(F, region1, region2, symmetric):
-    N = len(F)  # Размер матрицы F
+# Условие для области 4 (нижний треугольник)
+def area_4(i, j, N):
+    return i + j <= N - 1
 
-    # Определяем границы областей в зависимости от их номера
-    def get_region_indices(region):
-        indices = []
-        if region == 1:  # Область 1: нижний левый треугольник
-            for i in range(N):
-                for j in range(i):
-                    indices.append((i, j))
-        elif region == 2:  # Область 2: верхний треугольник
-            for i in range(N//2):
-                for j in range(i, N-i):
-                    indices.append((i, j))
-        elif region == 3:  # Область 3: нижний правый треугольник
-            for i in range(N):
-                for j in range(i+1, N):
-                    indices.append((i, j))
-        elif region == 4:  # Область 4: весь нижний треугольник
-            for i in range(N//2, N):
-                for j in range(N - i - 1, i + 1):
-                    indices.append((i, j))
-        return indices
+# Функция для транспонирования матрицы
+def transpose(matrix, N):
+    transposed = create_empty_matrix(N)
+    for i in range(N):
+        for j in range(N):
+            transposed[j][i] = matrix[i][j]
+    return transposed
 
-    # Получаем индексы для областей
-    indices1 = get_region_indices(region1)
-    indices2 = get_region_indices(region2)
-    
-    # Если требуется симметричный обмен, зеркально отразим индексы второй области
-    if symmetric:
-        for (i1, j1), (i2, j2) in zip(indices1, reversed(indices2)):
-            F[i1][j1], F[i2][j2] = F[i2][j2], F[i1][j1]
+# Умножение двух матриц
+def multiply_matrices(matrix1, matrix2, N):
+    result = create_empty_matrix(N)
+    for i in range(N):
+        for j in range(N):
+            result[i][j] = sum(matrix1[i][k] * matrix2[k][j] for k in range(N))
+    return result
+
+# Вычитание матриц
+def subtract_matrices(matrix1, matrix2, N):
+    result = create_empty_matrix(N)
+    for i in range(N):
+        for j in range(N):
+            result[i][j] = matrix1[i][j] - matrix2[i][j]
+    return result
+
+# Основная программа
+def main():
+    # Ввод размерности и числа K
+    K = int(input("Введите число K: "))
+    N = int(input("Введите размерность матрицы N: "))
+
+    # Чтение матрицы A из файла
+    filename = input("Введите имя файла с матрицей A: ")
+    A = read_matrix_from_file(filename)
+
+    print("Матрица A:")
+    for row in A:
+        print(row)
+
+    # Создание матрицы F
+    F = [row[:] for row in A]
+
+    # Подсчет нулей в нечетных столбцах области 4
+    zeros_area_4 = sum(
+        1 for j in range(0, N, 2) for i in range(N) if area_4(i, j, N) and A[i][j] == 0
+    )
+
+    # Подсчет нулей в четных столбцах области 1
+    zeros_area_1 = sum(
+        1 for j in range(1, N, 2) for i in range(N) if area_1(i, j, N) and A[i][j] == 0
+    )
+
+    # Замена областей в зависимости от условий
+    if zeros_area_4 > zeros_area_1:
+        # Симметричная замена областей 2 и 3
+        for i in range(N):
+            for j in range(N):
+                if area_2(i, j, N) and area_3(i, j, N):
+                    F[i][j], F[N-1-i][N-1-j] = F[N-1-i][N-1-j], F[i][j]
     else:
-        for (i1, j1), (i2, j2) in zip(indices1, indices2):
-            F[i1][j1], F[i2][j2] = F[i2][j2], F[i1][j1]
+        # Несимметричная замена областей 1 и 2
+        for i in range(N):
+            for j in range(N):
+                if area_1(i, j, N):
+                    F[i][j], F[j][i] = F[j][i], F[i][j]
 
+    print("Матрица F:")
+    for row in F:
+        print(row)
 
+    # Вычисление ((F * A) - (K * AT))
+    FA = multiply_matrices(F, A, N)
+    AT = transpose(A, N)
+    KAT = [[K * AT[i][j] for j in range(N)] for i in range(N)]
+    result = subtract_matrices(FA, KAT, N)
 
-# Проверка условия и обмен областей в F
-odd_zeros_region4 = count_zeros_in_region(A, N//2, N, N//2, N, 1)  # Нечетные столбцы в области 4
-even_zeros_region1 = count_zeros_in_region(A, 0, N//2, 0, N//2, 0)  # Четные столбцы в области 1
+    print("Результат ((F * A) - (K * AT)):")
+    for row in result:
+        print(row)
 
-if odd_zeros_region4 > even_zeros_region1:
-    swap_regions(F, 2, 3, symmetric=True)
-else:
-    swap_regions(F, 1, 2, symmetric=False)
+if __name__ == "__main__":
+    main()
 
-# Вывод матрицы F после условного обмена
-print("\nМатрица F после обмена областей:")
-for row in F:
-    print(row)
-
-# Вычисление транспонированной матрицы A
-A_T = [[A[j][i] for j in range(N)] for i in range(N)]
-
-# Вычисление выражения (F * A) - (K * A^T)
-result = [[sum(F[i][k] * A[k][j] for k in range(N)) - K * A_T[i][j] for j in range(N)] for i in range(N)]
-
-# Вывод результата
-print("\nРезультат вычисления (F * A) - (K * A^T):")
-for row in result:
     print(row)
 
