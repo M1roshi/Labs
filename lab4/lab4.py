@@ -25,16 +25,13 @@ def digit_to_word(digit):
     }
     return words.get(digit, digit)
 
-# Функция обработки чисел по условию
+# Функция обработки нечётных чисел по условию
 def process_numbers(numbers):
     processed = []
     for index, number in enumerate(numbers):
-        if index % 2 == 0:  # нечетная позиция (начиная с 0)
-            if re.match(r'.*[02468]$', number):  # Четное число
-                # Заменяем первую цифру на текстовое представление
-                processed.append(digit_to_word(number[0]) + number[1:])
-            else:
-                processed.append(number)
+        if index % 2 == 0:  # Нечётная позиция (0, 2, 4,...)
+            # Меняем первую цифру числа на её текстовое представление
+            processed.append(digit_to_word(number[0]) + number[1:])
         else:
             processed.append(number)
     return processed
@@ -44,14 +41,15 @@ input_file = "input.txt"  # Укажите путь к файлу
 with open(input_file, 'r') as file:
     content = file.read()
 
-# Распознаем числа с помощью регулярного выражения
-numbers = re.findall(r'\b-?\d+\b', content)
+# Регулярное выражение для нахождения только нечётных чисел
+odd_numbers = re.findall(r'\b-?\d*[13579]\b', content)
 
-# Обрабатываем числа
-result = process_numbers(numbers)
+# Обрабатываем только нечётные числа
+result = process_numbers(odd_numbers)
 
 # Выводим результат
 print(" ".join(result))
+
 
 
 
