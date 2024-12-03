@@ -53,11 +53,23 @@ class CircleApp:
         tk.Button(control_frame, text="Сохранить", command=self.save_circles).grid(row=0, column=1, padx=5, pady=5)
         tk.Button(control_frame, text="Добавить круг", command=self.add_circle).grid(row=0, column=2, padx=5, pady=5)
         tk.Button(control_frame, text="Проверить пересечения", command=self.check_intersections).grid(row=0, column=3, padx=5, pady=5)
-        
+
+        # Поля ввода для смещения
+        tk.Label(control_frame, text="Смещение по X:").grid(row=1, column=0)
+        self.dx_entry = tk.Entry(control_frame)
+        self.dx_entry.grid(row=1, column=1)
+
+        tk.Label(control_frame, text="Смещение по Y:").grid(row=1, column=2)
+        self.dy_entry = tk.Entry(control_frame)
+        self.dy_entry.grid(row=1, column=3)
+
+        tk.Button(control_frame, text="Переместить круг", command=self.move_circle).grid(row=1, column=4)
+
         self.circles = []  # Список объектов Circle
+        self.selected_circle = None  # Выбранный круг
 
     def load_circles(self):
-        """Загрузка кругов из CSV-файла."""
+        """Загрузка кругов из CSV-файла с контролем правильности ввода."""
         file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
         if not file_path:
             return
@@ -66,9 +78,23 @@ class CircleApp:
                 reader = csv.reader(file)
                 self.circles.clear()
                 self.canvas.delete("all")
+                line_number = 0
                 for row in reader:
-                    x, y, radius, color = int(row[0]), int(row[1]), int(row[2]), row[3]
-                    self.add_circle_to_canvas(Circle(x, y, radius, color))
+                    line_number += 1
+                    if len(row) != 4:
+                        raise ValueError(f"Ошибка в строке {line_number}: ожидалось 4 значения, получено {len(row)}.")
+                    try:
+                        x = int(row[0])
+                        y = int(row[1])
+                        radius = int(row[2])
+                        if radius <= 0:
+                            raise ValueError(f"Ошибка в строке {line_number}: радиус должен быть положительным.")
+                        color = row[3].strip()
+                        if not color:
+                            raise ValueError(f"Ошибка в строке {line_number}: цвет не может быть пустым.")
+                        self.add_circle_to_canvas(Circle(x, y, radius, color))
+                    except ValueError as ve:
+                        raise ValueError(f"Ошибка в строке {line_number}: {ve}")
         except Exception as e:
             messagebox.showerror("Ошибка", f"Ошибка загрузки файла: {e}")
 
@@ -125,7 +151,7 @@ class CircleApp:
         self.canvas.create_oval(
             circle.x - circle.radius, circle.y - circle.radius,
             circle.x + circle.radius, circle.y + circle.radius,
-            fill=circle.color, outline="black"
+            fill=circle.color, outline="black", tags="circle"
         )
 
     def check_intersections(self):
@@ -141,8 +167,38 @@ class CircleApp:
         else:
             messagebox.showinfo("Пересечения", "Нет пересекающихся кругов.")
 
+    def move_circle(self):
+        """Перемещение выбранного круга на плоскости."""
+        if not self.selected_circle:
+            messagebox.showwarning("Выбор круга", "Выберите круг для перемещения.")
+            return
+
+        try:
+            dx = int(self.dx_entry.get())  # Смещение по X
+            dy = int(self.dy_entry.get())  # Смещение по Y
+        except ValueError:
+            messagebox.showerror("Ошибка", "Пожалуйста, введите корректные значения смещения.")
+            return
+
+        # Перемещаем круг на заданное смещение
+        self.selected_circle.move(dx, dy)
+        self.canvas.delete("all")  # Удаляем старые круги
+        for circle in self.circles:
+            self.add_circle_to_canvas(circle)
+
+    def on_canvas_click(self, event):
+        """Выбор круга по клику на канвасе."""
+        for circle in self.circles:
+            # Проверяем, попадает ли клик в круг
+            if (event.x - circle.x) ** 2 + (event.y - circle.y) ** 2 <= circle.radius ** 2:
+                self.selected_circle = circle
+                messagebox.showinfo("Выбран круг", f"Вы выбрали круг с центром в ({circle.x}, {circle.y}).")
+                return
+        self.selected_circle = None  # Если не выбрали круг
+
 
 if __name__ == "__main__":
     root = tk.Tk()
     app = CircleApp(root)
+    root.bind("<Button-1>", app.on_canvas_click)  # Обработчик клика на канвас
     root.mainloop()
