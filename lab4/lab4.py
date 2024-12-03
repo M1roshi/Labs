@@ -30,7 +30,7 @@ def process_numbers(numbers):
     processed = []
     for index, number in enumerate(numbers):
         if index % 2 == 0:  # нечетная позиция (начиная с 0)
-            if int(number) % 2 == 0:  # четное число
+            if re.match(r'.*[02468]$', number):  # Четное число
                 # Заменяем первую цифру на текстовое представление
                 processed.append(digit_to_word(number[0]) + number[1:])
             else:
@@ -52,6 +52,7 @@ result = process_numbers(numbers)
 
 # Выводим результат
 print(" ".join(result))
+
 
 
 
