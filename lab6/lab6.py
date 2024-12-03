@@ -101,11 +101,11 @@ all_combinations = generate_all_combinations(women, men)
 
 # Вывод результатов
 print(f"Часть 1: Сравнение алгоритмического и Pythonic решений")
-print(f"Алгоритмическое решение: {algo_time:.4f} сек")
-print(f"Pythonic решение: {pythonic_time:.4f} сек")
+print(f"Алгоритмическое решение: {algo_time:.8f} сек")
+print(f"Pythonic решение: {pythonic_time:.8f} сек")
 
 print("\nЧасть 2: Генерация с ограничением и целевой функцией")
-print(f"С ограничением: {constraint_time:.4f} сек")
+print(f"С ограничением: {constraint_time:.8f} сек")
 
 # Вывод количества вариантов и примера комбинации
 print(f"Количество всех возможных комбинаций: {len(all_combinations)}")
