@@ -10,60 +10,69 @@
 
 import math
 import timeit
+from functools import lru_cache
 
-# Рекурсивная функция с мемоизацией
-memo = {}
-
-def F_recursive(n):
+# Рекурсивное вычисление с мемоизацией
+@lru_cache(None)  # Без ограничений на кэш
+def recursive_F(n):
     if n < 2:
         return 5
-    if n not in memo:
-        memo[n] = ((-1) ** n) * (
-            F_recursive(n - 1) / math.factorial(n) * F_recursive(n - 5) / math.factorial(2 * n)
-        )
-    return memo[n]
+    else:
+        term1 = recursive_F(n - 1) / math.factorial(n)
+        term2 = recursive_F(n - 5) / math.factorial(2 * n)
+        return (-1)**n * term1 * term2
 
-# Итеративная функция с уменьшением на постоянную величину
-def F_iterative_optimized(n):
+# Итеративное вычисление
+def iterative_F(n):
     if n < 2:
         return 5
-    values = [5, 5, 5, 5, 5]  # Начальные значения F(0), F(1), ..., F(4)
-    for i in range(2, n + 1):
-        current = ((-1) ** i) * (
-            values[-1] / math.factorial(i) * values[0] / math.factorial(2 * i)
-        )
-        # Обновляем массив значений (сдвигаем на 1 позицию)
-        values = values[1:] + [current]
-    return values[-1]
+    
+    values = [5, 5]  # Начальные значения F(0) и F(1)
+    
+    for i in range(2, n+1):
+        term1 = values[i-1] / math.factorial(i)
+        term2 = values[i-5] / math.factorial(2 * i) if i >= 5 else 0
+        result = (-1)**i * term1 * term2
+        values.append(result)
+    
+    return values[n]
 
-# Функция для измерения времени с использованием timeit
-def measure_time_optimized(n, repeats=10):
-    recursive_time = float('inf')
-    iterative_time = float('inf')
+# Измерение времени выполнения с использованием timeit
+def measure_time(func, n):
+    stmt = f"{func.__name__}({n})"  # Строка, которая вызывает функцию с аргументом
+    setup = f"from __main__ import {func.__name__}"  # Подключение функции из основного модуля
+    return timeit.timeit(stmt=stmt, setup=setup, number=100)  # Измеряем время выполнения 100 раз
 
-    # Измерение рекурсивного метода
+# Основной блок
+def main():
     try:
-        recursive_time = timeit.timeit(lambda: F_recursive(n), number=repeats) / repeats
-    except RecursionError:
-        recursive_time = float('inf')  # Если превышена глубина стека
+        n_max = int(input("Введите максимальное значение n: "))  # Запрос максимального значения n
+        if n_max < 1:
+            print("Значение n должно быть больше или равно 1.")
+            return
+    except ValueError:
+        print("Неверный ввод. Пожалуйста, введите целое число.")
+        return
+    
+    results = []
 
-    # Измерение итеративного метода
-    iterative_time = timeit.timeit(lambda: F_iterative_optimized(n), number=repeats) / repeats
+    print("Измерения времени работы:")
+    print(" n  | Recursive Time (s) | Iterative Time (s)")
+    print("-----------------------------------------------")
+    
+    # Измеряем для всех значений от 1 до n_max
+    for n in range(1, n_max + 1):
+        # Измеряем время выполнения
+        recursive_time = measure_time(recursive_F, n)
+        iterative_time = measure_time(iterative_F, n)
+        
+        results.append((n, recursive_time, iterative_time))
+    
+    # Выводим результаты в табличной форме
+    for result in results:
+        print(f" {result[0]}  | {result[1]:.6f}        | {result[2]:.6f}")
 
-    return recursive_time, iterative_time
-
-# Вывод таблицы результатов
-def print_results_optimized(max_n, repeats=10):
-    print(f"{'n':<5}{'Rec Time (s)':<20}{'Iter Time (s)':<20}")
-    print("-" * 45)
-    for n in range(max_n + 1):
-        rec_time, iter_time = measure_time_optimized(n, repeats)
-        print(f"{n:<5}{rec_time:<20.10f}{iter_time:<20.10f}")
-
-# Пример выполнения
 if __name__ == "__main__":
-    max_n = 50  # Максимальное значение n
-    repeats = 1000  # Количество повторов для измерений
-    print_results_optimized(max_n, repeats)
+    main()
 
 
