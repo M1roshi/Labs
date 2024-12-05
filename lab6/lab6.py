@@ -9,94 +9,100 @@
 """
     
 import timeit
-import itertools
 
+# Список женщин и мужчин
 women = ['W1', 'W2', 'W3', 'W4', 'W5']
 men = ['M1', 'M2', 'M3', 'M4', 'M5']
 
-
-# Алгоритмическое решение: генерация комбинаций вручную
-def combinations(lst, k):
-    result = []
-    n = len(lst)
-
-    def helper(start, current_combination):
-        if len(current_combination) == k:
-            result.append(current_combination[:])  # Сохраняем копию текущей комбинации
-            return
-        for i in range(start, n):
-            current_combination.append(lst[i])
-            helper(i + 1, current_combination)
-            current_combination.pop()  # Убираем последний элемент для следующей итерации
-
-    helper(0, [])
-    return result
-
-def generate_combinations_algorithmic(women, men):
-    results = []
+# Вариант 1: Алгоритмическое решение (без использования itertools)
+def generate_combinations_algorithmic():
+    all_combinations = []
     
-    dishwashers_combinations = combinations(women, 2)
+    # Перебираем все возможные пары женщин для посудомоек
+    for i in range(len(women)):
+        for j in range(i + 1, len(women)):  # Выбираем пару без повторений
+            # Выбираем всех мужчин для грузчиков (1 способ)
+            for m1 in range(len(men)):
+                for m2 in range(m1 + 1, len(men)):
+                    for m3 in range(m2 + 1, len(men)):
+                        for m4 in range(m3 + 1, len(men)):
+                            for m5 in range(m4 + 1, len(men)):
+                                # Генерируем всех официантов (оставшихся женщин)
+                                remaining_women = [w for k, w in enumerate(women) if k != i and k != j]
+                                # Мужчины уже все заняты, поэтому официанты это оставшиеся женщины
+                                waiters = remaining_women
+                                
+                                # Добавляем текущую комбинацию в список
+                                all_combinations.append(((women[i], women[j]), (men[m1], men[m2], men[m3], men[m4], men[m5]), waiters))
+    
+    return all_combinations
 
-    for dishwashers in dishwashers_combinations:
-        remaining_women = [w for w in women if w not in dishwashers]
+# Вариант 2: Использование функций Python
+def choose_dishwashers(women):
+    return [(women[i], women[j]) for i in range(len(women)) for j in range(i + 1, len(women))]
 
-        movers_combinations = combinations(men, 5)
+def choose_movers(men):
+    return [(men[m1], men[m2], men[m3], men[m4], men[m5]) for m1 in range(len(men)) for m2 in range(m1 + 1, len(men)) for m3 in range(m2 + 1, len(men)) for m4 in range(m3 + 1, len(men)) for m5 in range(m4 + 1, len(men))]
 
-        for movers in movers_combinations:
-            potential_waiters = remaining_women + men
-            waiters_combinations = combinations(potential_waiters, 5)
+def generate_all_combinations(dishwashers, movers, women, men):
+    all_combinations = []
+    
+    for dishwasher in dishwashers:
+        for mover in movers:
+            remaining_women = [w for w in women if w not in dishwasher]
+            remaining_men = [m for m in men if m not in mover]
+            waiters = remaining_women + remaining_men
+            all_combinations.append((dishwasher, mover, waiters))
+    
+    return all_combinations
 
-            for waiters in waiters_combinations:
-                results.append({
-                    'Dishwashers': dishwashers,
-                    'Movers': movers,
-                    'Waiters': waiters
-                })
+# Вариант 3: Усложнённое решение с ограничениями
+def generate_combinations_with_restrictions():
+    dishwashers = [(women[i], women[j]) for i in range(len(women)) for j in range(i + 1, len(women))]
+    movers = [(men[m1], men[m2], men[m3], men[m4], men[m5]) for m1 in range(len(men)) for m2 in range(m1 + 1, len(men)) for m3 in range(m2 + 1, len(men)) for m4 in range(m3 + 1, len(men)) for m5 in range(m4 + 1, len(men))]
+    
+    all_combinations = []
+    for dishwasher in dishwashers:
+        for mover in movers:
+            remaining_women = [w for w in women if w not in dishwasher]
+            remaining_men = [m for m in men if m not in mover]
+            waiters = remaining_women  # Официанты — это оставшиеся женщины
+            all_combinations.append((dishwasher, mover, waiters))
+    
+    return all_combinations
 
-    return results
+# Основная функция для выполнения
+def main():
+    # Алгоритмическое решение
+    start_time = timeit.default_timer()
+    combinations_algorithmic = generate_combinations_algorithmic()
+    end_time = timeit.default_timer()
+    print(f"Количество вариантов (алгоритмический): {len(combinations_algorithmic)}")
+    print(f"Время выполнения (алгоритмический): {end_time - start_time:.6f} секунд")
+    
+    # Решение с использованием функций
+    start_time = timeit.default_timer()
+    dishwashers = choose_dishwashers(women)
+    movers = choose_movers(men)
+    combinations_functions = generate_all_combinations(dishwashers, movers, women, men)
+    end_time = timeit.default_timer()
+    print(f"Количество вариантов (с использованием функций): {len(combinations_functions)}")
+    print(f"Время выполнения (с использованием функций): {end_time - start_time:.6f} секунд")
+    
+    # Решение с ограничениями
+    start_time = timeit.default_timer()
+    combinations_restricted = generate_combinations_with_restrictions()
+    end_time = timeit.default_timer()
+    print(f"Количество вариантов с ограничениями: {len(combinations_restricted)}")
+    print(f"Время выполнения (с ограничениями): {end_time - start_time:.6f} секунд")
+    
+    # Вывод всех вариантов с ограничениями
+    print("\nВсе возможные комбинации работников с ограничениями:")
+    for combination in combinations_restricted:
+        dishwashers, movers, waiters = combination
+        print(f"\nПосудомойки: {dishwashers}, Грузчики: {movers}, Официанты: {waiters}")
 
-def generate_combinations_pythonic(women, men):
-    results = []
-
-    for dishwashers in itertools.combinations(women, 2):
-        remaining_women = set(women) - set(dishwashers)
-        
-        for movers in itertools.combinations(men, 5):
-            potential_waiters = remaining_women.union(men)
-            for waiters in itertools.combinations(potential_waiters, 5):
-                results.append({
-                    'Dishwashers': dishwashers,
-                    'Movers': movers,
-                    'Waiters': waiters
-                })
-
-    return results
-
-# Целевая функция: минимизация количества мужчин среди официантов
-def objective_function(combination):
-    men_waiters = len([w for w in combination['Waiters'] if w.startswith('M')])
-    return men_waiters
-
-# Таймеры для измерения времени
-algo_time = timeit.timeit(lambda: generate_combinations_algorithmic(women, men), number=1)
-pyth_time = timeit.timeit(lambda: generate_combinations_pythonic(women, men), number=1)
-
-# Генерация всех комбинаций
-all_combinations_algo = generate_combinations_algorithmic(women, men)
-all_combinations_pyth = generate_combinations_pythonic(women, men)
-
-# Нахождение оптимального решения (минимум мужчин среди официантов)
-optimal_combination_algo = min(all_combinations_algo, key=objective_function)
-optimal_combination_pyth = min(all_combinations_pyth, key=objective_function)
-
-# Вывод результатов
-print("Результаты алгоритмического решения:")
-print(f"Количество комбинаций: {len(all_combinations_algo)}")
-print(f"Оптимальная комбинация: {optimal_combination_algo}")
-print(f"Время выполнения: {algo_time:.8f} секунд\n")
-
-print("Результаты Pythonic решения:")
-print(f"Количество комбинаций: {len(all_combinations_pyth)}")
-print(f"Оптимальная комбинация: {optimal_combination_pyth}")
-print(f"Время выполнения: {pyth_time:.8f} секунд")
+# Запуск программы
+if __name__ == "__main__":
+    main()
 
