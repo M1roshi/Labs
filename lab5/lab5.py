@@ -10,69 +10,66 @@
 
 import math
 import timeit
-from functools import lru_cache
 
-# Рекурсивное вычисление с мемоизацией
-@lru_cache(None)  # Без ограничений на кэш
-def recursive_F(n):
+# Рекурсивная версия функции
+def recursive_f(n):
     if n < 2:
         return 5
+    elif n == 2:
+        return (-1)**n * (recursive_f(n - 1) / math.factorial(n) * recursive_f(n - 5) / math.factorial(2 * n))
     else:
-        term1 = recursive_F(n - 1) / math.factorial(n)
-        term2 = recursive_F(n - 5) / math.factorial(2 * n)
-        return (-1)**n * term1 * term2
+        # Вычисляем рекуррентную формулу с учетом базовых значений
+        fn_minus_5 = recursive_f(n - 5) if n >= 5 else 5  # Для n < 5 используем F(x < 2) как 5
+        return (-1) ** n * (recursive_f(n - 1) / math.factorial(n) * fn_minus_5 / math.factorial(2 * n))
 
-# Итеративное вычисление
-def iterative_F(n):
+# Итеративная версия функции
+def iterative_f(n):
     if n < 2:
         return 5
-    
-    values = [5, 5]  # Начальные значения F(0) и F(1)
-    
-    for i in range(2, n+1):
-        term1 = values[i-1] / math.factorial(i)
-        term2 = values[i-5] / math.factorial(2 * i) if i >= 5 else 0
-        result = (-1)**i * term1 * term2
-        values.append(result)
-    
-    return values[n]
+    elif n == 2:
+        f_prev = 5  # F(1)
+        f_curr = 5  # F(2)
+        factorial_prev = math.factorial(1)
+        factorial_2n = math.factorial(2 * 2)
+        return (-1)**n * (f_prev / factorial_prev * f_curr / factorial_2n)
+    else:
+        f_prev = 5  # F(1)
+        f_curr = 5  # F(2)
+        factorial_prev = math.factorial(1)
+        factorial_2n = math.factorial(2 * 2)
+        for i in range(3, n + 1):
+            factorial_now = math.factorial(i)
+            factorial_2now = math.factorial(2 * i)
+            fn_minus_5 = 5 if i < 5 else f_curr  # For i < 5, use F(x<2) as 5
+            f_next = (-1) ** i * (f_prev / factorial_now * fn_minus_5 / factorial_2now)
+            f_prev = f_curr
+            f_curr = f_next
+            factorial_prev = factorial_now
+            factorial_2n = factorial_2now
+        return f_curr
 
-# Измерение времени выполнения с использованием timeit
-def measure_time(func, n):
-    stmt = f"{func.__name__}({n})"  # Строка, которая вызывает функцию с аргументом
-    setup = f"from __main__ import {func.__name__}"  # Подключение функции из основного модуля
-    return timeit.timeit(stmt=stmt, setup=setup, number=100)  # Измеряем время выполнения 100 раз
+# Сравнительное время вычислений
+p = 1
+while p == 1:
+    n = int(input("Введите n: "))
 
-# Основной блок
-def main():
+    # Итеративное вычисление
+    result_iterative = iterative_f(n)
+    time_iterative = timeit.timeit("iterative_f(n)", globals=globals(), number=1)
+    print(f"F({n}) (итеративно): {result_iterative}, время: {time_iterative} сек.")
+
+    # Рекурсивное вычисление
     try:
-        n_max = int(input("Введите максимальное значение n: "))  # Запрос максимального значения n
-        if n_max < 1:
-            print("Значение n должно быть больше или равно 1.")
-            return
-    except ValueError:
-        print("Неверный ввод. Пожалуйста, введите целое число.")
-        return
-    
-    results = []
+        result_recursive = recursive_f(n)
+        time_recursive = timeit.timeit("recursive_f(n)", globals=globals(), number=1)
+        print(f"F({n}) (рекурсивно): {result_recursive}, время: {time_recursive} сек.")
+    except RecursionError:
+        print(f"Ошибка рекурсии при n = {n} (переполнение стека)")
 
-    print("Измерения времени работы:")
-    print(" n  | Recursive Time (s) | Iterative Time (s)")
-    print("-----------------------------------------------")
-    
-    # Измеряем для всех значений от 1 до n_max
-    for n in range(1, n_max + 1):
-        # Измеряем время выполнения
-        recursive_time = measure_time(recursive_F, n)
-        iterative_time = measure_time(iterative_F, n)
-        
-        results.append((n, recursive_time, iterative_time))
-    
-    # Выводим результаты в табличной форме
-    for result in results:
-        print(f" {result[0]}  | {result[1]:.6f}        | {result[2]:.6f}")
+    print("=" * 100)
 
-if __name__ == "__main__":
-    main()
+    # Ввод для продолжения или завершения работы
+    p = int(input("0/1: "))
+
 
 
