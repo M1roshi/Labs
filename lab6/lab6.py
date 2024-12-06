@@ -97,7 +97,7 @@ def main():
     print(f"Время выполнения (с ограничениями): {end_time - start_time:.6f} секунд")
     
     # Вывод всех вариантов с ограничениями
-    print("\nВсе возможные комбинации работников с ограничениями:")
+    print("\nВсе возможные комбинации работников, если имеются 5 женщин и 5 мужчин:")
     for combination in combinations_restricted:
         dishwashers, movers, waiters = combination
         print(f"\nПосудомойки: {dishwashers}, Грузчики: {movers}, Официанты: {waiters}")
