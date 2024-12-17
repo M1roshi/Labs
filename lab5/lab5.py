@@ -38,27 +38,31 @@ def F_iterative(n):
         return 5
     elif n == 2:
         return 5
-    
-    values = {1: 5, 2: 5}  # базовый случай F(x < 2) = 5
-    f_prev = 5  # Значение F(1)
-    f_curr = 5  # Значение F(2)
-    minus = -1
-    
-    # Инициализация факториалов
-    factorial_back = 1
-    factorial_now = 2
-    
+
+    f_prev = 5  # F(1)
+    f_curr = 5  # F(2)
+    minus = -1  # Чередование знака
+
+    factorial_n = 1    # Начальное значение для n!
+    factorial_2n = 1   # Начальное значение для (2n)!
+
     for i in range(3, n + 1):
-        factorial_now = factorial_back * (2 * i) * (2 * i - 1)
-        f_next = minus * (f_prev / factorial_now) * (f_curr / factorial_now)
+        # Обновляем факториал для n! (предыдущее значение * i)
+        factorial_n *= i
         
-        # Обновляем переменные для следующей итерации
+        # Обновляем факториал для (2n)! через предыдущее значение
+        factorial_2n *= (2 * i) * (2 * i - 1)
+        
+        # Вычисляем F(i) по формуле
+        f_next = minus * (f_curr / factorial_n) * (f_prev / factorial_2n)
+
+        # Обновляем значения для следующей итерации
         f_prev = f_curr
         f_curr = f_next
-        factorial_back = factorial_now
-        minus *= -1
-    
+        minus *= -1  # Меняем знак
+
     return f_curr
+
 
 # Функции для замера времени
 def measure_recursive_time(n):
