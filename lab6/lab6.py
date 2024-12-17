@@ -8,125 +8,78 @@
 Сформировать все возможные варианты заполнения вакантных мест, если имеются 5 женщин и 5 мужчин.
 """
     
-import timeit
 import itertools
+import timeit
 
-# Данные
-women = ['Женщина1', 'Женщина2', 'Женщина3', 'Женщина4', 'Женщина5']
-men = ['Мужчина1', 'Мужчина2', 'Мужчина3', 'Мужчина4', 'Мужчина5']
+# Женщины и мужчины
+women = ['w1', 'w2', 'w3', 'w4', 'w5']
+men = ['m1', 'm2', 'm3', 'm4', 'm5']
 
-# 1. Алгоритмическое решение
-def algorithmic_solution(women, men):
-    # Перебор женщин для посудомоек
-    dishwashers = []
+# 1. Алгоритмический подход
+def algorithmic_approach():
+    combinations = []
+
+    # Перебираем 2 женщины для посудомоек
     for i in range(len(women)):
-        for j in range(i+1, len(women)):
-            dishwashers.append([women[i], women[j]])
-    
-    # Перебор мужчин для грузчиков
-    loaders = []
-    for i in range(len(men)):
-        for j in range(i+1, len(men)):
-            for k in range(j+1, len(men)):
-                for l in range(k+1, len(men)):
-                    for m in range(l+1, len(men)):
-                        loaders.append([men[i], men[j], men[k], men[l], men[m]])
-    
-    # Формируем все возможные варианты для официантов
-    all_workers = women + men
-    waiters_combinations = []
-    for i in range(len(all_workers)):
-        for j in range(i+1, len(all_workers)):
-            for k in range(j+1, len(all_workers)):
-                for l in range(k+1, len(all_workers)):
-                    for m in range(l+1, len(all_workers)):
-                        waiters_combinations.append([all_workers[i], all_workers[j], all_workers[k], all_workers[l], all_workers[m]])
-    
-    return dishwashers, loaders, waiters_combinations
+        for j in range(i + 1, len(women)):
+            dishwashers = [women[i], women[j]]
+            remaining_women = [w for w in women if w not in dishwashers]
 
-# Измерение времени для алгоритмического решения
-def time_algorithmic_solution():
-    return timeit.timeit(lambda: algorithmic_solution(women, men), number=1)
+            # Перебираем 5 мужчин для грузчиков
+            for k in range(len(men)):
+                for l in range(k + 1, len(men)):
+                    for m in range(l + 1, len(men)):
+                        for n in range(m + 1, len(men)):
+                            for o in range(n + 1, len(men)):
+                                loaders = [men[k], men[l], men[m], men[n], men[o]]
+                                remaining_men = [m for m in men if m not in loaders]
 
-# 2. Решение с использованием Python функций (itertools)
+                                # Официанты: оставшиеся сотрудники
+                                waiters = remaining_women + remaining_men
+                                combinations.append((dishwashers, loaders, waiters))
+    return combinations
 
-def python_function_solution(women, men):
-    # Перебор женщин для посудомоек
-    dishwashers = list(itertools.combinations(women, 2))
+# 2. Pythonic подход с использованием itertools
+def pythonic_approach():
+    combinations = []
 
-    # Перебор мужчин для грузчиков
-    loaders = list(itertools.combinations(men, 5))
+    # Все комбинации для посудомоек (2 женщины)
+    for dishwashers in itertools.combinations(women, 2):
+        remaining_women = [w for w in women if w not in dishwashers]
 
-    # Формируем все возможные варианты для официантов
-    all_workers = women + men
-    waiters_combinations = list(itertools.combinations(all_workers, 5))
+        # Все комбинации для грузчиков (5 мужчин)
+        for loaders in itertools.combinations(men, 5):
+            remaining_men = [m for m in men if m not in loaders]
 
-    return dishwashers, loaders, waiters_combinations
+            # Официанты: оставшиеся сотрудники
+            waiters = remaining_women + remaining_men
+            combinations.append((dishwashers, loaders, waiters))
+    return combinations
 
-# Измерение времени для решения с использованием itertools
-def time_python_function_solution():
-    return timeit.timeit(lambda: python_function_solution(women, men), number=1)
+# Функция для вывода всех вариантов
+def print_combinations(combinations, method_name):
+    print(f"\n{method_name}: Всего {len(combinations)} вариантов\n")
+    for i, (dishwashers, loaders, waiters) in enumerate(combinations):
+        print(f"Вариант {i+1}:")
+        print(f"  Посудомойки: {', '.join(dishwashers)}")
+        print(f"  Грузчики: {', '.join(loaders)}")
+        print(f"  Официанты: {', '.join(waiters)}")
+        print('-' * 40)
 
-# 3. Усложненное решение с ограничениями (не более 3 женщин среди официантов)
-def complex_solution(women, men, max_women_in_waiters=3):
-    # Перебор женщин для посудомоек
-    dishwashers = []
-    for i in range(len(women)):
-        for j in range(i+1, len(women)):
-            dishwashers.append([women[i], women[j]])
-    
-    # Перебор мужчин для грузчиков
-    loaders = []
-    for i in range(len(men)):
-        for j in range(i+1, len(men)):
-            for k in range(j+1, len(men)):
-                for l in range(k+1, len(men)):
-                    for m in range(l+1, len(men)):
-                        loaders.append([men[i], men[j], men[k], men[l], men[m]])
-    
-    # Формируем все возможные варианты для официантов с ограничениями
-    all_workers = women + men
-    valid_waiters_combinations = []
-    for i in range(len(all_workers)):
-        for j in range(i+1, len(all_workers)):
-            for k in range(j+1, len(all_workers)):
-                for l in range(k+1, len(all_workers)):
-                    for m in range(l+1, len(all_workers)):
-                        combination = [all_workers[i], all_workers[j], all_workers[k], all_workers[l], all_workers[m]]
-                        women_count = sum(1 for worker in combination if worker in women)
-                        if women_count <= max_women_in_waiters:
-                            valid_waiters_combinations.append(combination)
-    
-    return dishwashers, loaders, valid_waiters_combinations
+# Замер времени с помощью timeit
+algorithmic_time = timeit.timeit(algorithmic_approach, number=1)
+pythonic_time = timeit.timeit(pythonic_approach, number=1)
 
-# Измерение времени для усложненного решения
-def time_complex_solution():
-    return timeit.timeit(lambda: complex_solution(women, men), number=1)
+# Запускаем функции и сохраняем результаты
+algorithmic_result = algorithmic_approach()
+pythonic_result = pythonic_approach()
 
-# 4. Формирование всех возможных вариантов для каждой категории
+# Сравнение времени
+print(f"Время выполнения алгоритмического подхода: {algorithmic_time:.8f} секунд")
+print(f"Время выполнения Pythonic подхода: {pythonic_time:.8f} секунд")
 
-# 4.1. Посудомойки (2 женщины из 5)
-dishwashers = list(itertools.combinations(women, 2))
-
-# 4.2. Грузчики (5 мужчин из 5)
-loaders = list(itertools.combinations(men, 5))
-
-# 4.3. Официанты (5 человек из 10: женщин и мужчин)
-all_workers = women + men
-waiters_combinations = list(itertools.combinations(all_workers, 5))
-
-# Запуск и вывод времени выполнения для каждого решения
-algorithmic_time = time_algorithmic_solution()
-python_function_time = time_python_function_solution()
-complex_solution_time = time_complex_solution()
-
-print(f"Время выполнения алгоритмического решения: {algorithmic_time:.6f} секунд.")
-print(f"Время выполнения решения с использованием функций Python: {python_function_time:.6f} секунд.")
-print(f"Время выполнения усложненного решения с ограничениями: {complex_solution_time:.6f} секунд.")
-
-# Вывод результатов
-print(f"Все возможные варианты для посудомоек (2 женщины): {dishwashers}")
-print(f"Все возможные варианты для грузчиков (5 мужчин): {loaders}")
-print(f"Все возможные варианты для официантов (5 человек): {waiters_combinations}")
+# Выводим все результаты
+print_combinations(algorithmic_result, "Алгоритмический подход")
+print_combinations(pythonic_result, "Pythonic подход")
 
 
