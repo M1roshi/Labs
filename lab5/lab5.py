@@ -8,61 +8,83 @@
 Вариант 6:	F(x<2) = 5; F(n) =(-1)^n*(F(n-1)/n! * F(n-5) /(2n)!)
 """
 
-import math
 import timeit
 
-# Рекурсивная функция
-def recursive_f(n):
+# Рекурсивная версия с мемоизацией
+def F_recursive(n, memo=None):
+    if memo is None:
+        memo = {1: 5}  # базовый случай F(x < 2) = 5
     if n < 2:
         return 5
-    else:
-        sign = 1 if n % 2 == 0 else -1
-        return sign * (recursive_f(n - 1) / math.factorial(n) * recursive_f(n - 5) / math.factorial(2 * n))
+    if n in memo:
+        return memo[n]
+    
+    # Факториал через предыдущее значение
+    factorial_n = 1
+    factorial_2n = 1
+    for i in range(2, n + 1):
+        factorial_n *= i
+        factorial_2n *= 2 * i
+        factorial_2n *= (2 * i - 1)
 
+    # Основная формула для рекурсивного вычисления
+    result = (-1) ** n * (F_recursive(n - 1, memo) / factorial_n) * (F_recursive(n - 5, memo) / factorial_2n)
+    memo[n] = result
+    return result
 
-# Итеративная функция
-def iterative_f(n):
-    if n < 2:
+# Итеративная версия
+def F_iterative(n):
+    if n == 1:
         return 5
-    else:
-        f_values = [5, 5]  # F(0) и F(1) равны 5
-        factorials = [1, 1]  # Начальные значения для 0! и 1!
+    elif n == 2:
+        return 5
+    
+    values = {1: 5, 2: 5}  # базовый случай F(x < 2) = 5
+    f_prev = 5  # Значение F(1)
+    f_curr = 5  # Значение F(2)
+    minus = -1
+    
+    # Инициализация факториалов
+    factorial_back = 1
+    factorial_now = 2
+    
+    for i in range(3, n + 1):
+        factorial_now = factorial_back * (2 * i) * (2 * i - 1)
+        f_next = minus * (f_prev / factorial_now) * (f_curr / factorial_now)
         
-        # Рассчитываем факториалы для n и 2n
-        for i in range(2, n + 1):
-            factorials.append(factorials[-1] * i)
+        # Обновляем переменные для следующей итерации
+        f_prev = f_curr
+        f_curr = f_next
+        factorial_back = factorial_now
+        minus *= -1
+    
+    return f_curr
+
+# Функции для замера времени
+def measure_recursive_time(n):
+    return timeit.timeit(lambda: F_recursive(n), number=1)
+
+def measure_iterative_time(n):
+    return timeit.timeit(lambda: F_iterative(n), number=1)
+
+# Сравнение времени выполнения
+def compare_times(n_max):
+    print(f"{'n':<5}{'Recursive Time (s)':<25}{'Iterative Time (s)'}")
+    print("-" * 50)
+    
+    for n in range(1, n_max + 1):
+        # Рекурсивное время
+        recursive_time = measure_recursive_time(n)
         
-        # Рассчитываем итеративно значения функции F(n)
-        for i in range(2, n + 1):
-            f_n_minus_1 = f_values[i - 1]  # F(n-1)
-            f_n_minus_5 = f_values[i - 5] if i - 5 >= 0 else 5  # F(n-5), если n-5 < 0, то берем 5
-            factorial_n = factorials[i]  # n!
-            factorial_2n = factorials[2 * i] if 2 * i < len(factorials) else math.factorial(2 * i)  # (2n)!
-            
-            f_next = (-1) ** i * (f_n_minus_1 / factorial_n * f_n_minus_5 / factorial_2n)
-            f_values.append(f_next)
+        # Итеративное время
+        iterative_time = measure_iterative_time(n)
+        
+        # Выводим результаты
+        print(f"{n:<5}{recursive_time:<25}{iterative_time}")
 
-        return f_values[n]
-
-# Основной цикл
-p = 1
-while p == 1:
-    n = int(input("Введите n: "))
-    
-    # Вычисление и время выполнения для итеративного метода
-    result_iterative = iterative_f(n)
-    time_iterative = timeit.timeit("iterative_f(n)", globals=globals(), number=1)
-    print(f"F({n}) (итеративно): {result_iterative}, время: {time_iterative} сек.")
-    
-    # Вычисление и время выполнения для рекурсивного метода
-    result_recursive = recursive_f(n)
-    time_recursive = timeit.timeit("recursive_f(n)", globals=globals(), number=1)
-    print(f"F({n}) (рекурсивно): {result_recursive}, время: {time_recursive} сек.")
-    
-    print("=" * 100)
-    
-    # Прекращение или повторение вычислений
-    p = int(input("0/1: "))
+# Выполнение эксперимента для n от 1 до 20
+n_max = 20
+compare_times(n_max)
 
 
 
